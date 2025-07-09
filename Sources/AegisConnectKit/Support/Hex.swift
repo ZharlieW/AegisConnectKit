@@ -9,9 +9,7 @@ extension Data {
 
 enum CryptoUtils {
     /// Generates a random hex string of given byte length * 2 characters.
-    static func randomHex(byteCount: Int) -> String {
-        var bytes = [UInt8](repeating: 0, count: byteCount)
-        _ = SecRandomCopyBytes(kSecRandomDefault, byteCount, &bytes)
-        return Data(bytes).hexString
+    static func generate64RandomHexChars() -> String {
+        randomHex(byteCount: 32)
     }
-} 
+}

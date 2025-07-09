@@ -20,7 +20,7 @@ public enum NIP46Builder {
         let keyPair = Curve25519.Signing.PrivateKey()
         let pubHex = keyPair.publicKey.rawRepresentation.hexString
         let privHex = keyPair.rawRepresentation.hexString
-        let secret = CryptoUtils.randomHex(byteCount: 32) // 64 hex chars
+        let secret = CryptoUtils.generate64RandomHexChars() // 64 hex chars
 
         let uri = createNostrConnectURL(
             clientPubKey: pubHex,
