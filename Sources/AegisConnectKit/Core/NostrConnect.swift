@@ -1,5 +1,5 @@
 import Foundation
-import CryptoKit
+import secp256k1
 
 public enum NIP46Builder {
     /// Generates keypair and secret, stores them into a connection holder then returns nostrconnect URI.
@@ -17,9 +17,11 @@ public enum NIP46Builder {
         url: String = "",
         image: String = ""
     ) -> (uri: String, pubkey: String, privkey: String, secret: String) {
-        let keyPair = Curve25519.Signing.PrivateKey()
-        let pubHex = keyPair.publicKey.rawRepresentation.hexString
-        let privHex = keyPair.rawRepresentation.hexString
+        guard let keychain = try? BIP340Keychain() else {
+            fatalError("Unable to generate keypair")
+        }
+        let pubHex = keychain.publicKeyHex
+        let privHex = keychain.privateKeyHex
         let secret = CryptoUtils.generate64RandomHexChars() // 64 hex chars
 
         let uri = createNostrConnectURL(
