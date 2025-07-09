@@ -1,64 +1,47 @@
 import Foundation
-import secp256k1
+import libsecp256k1
 
-/// Swift version of the Dart `Keychain` using BIP-340 Schnorr signatures over secp256k1.
-public struct BIP340Keychain {
-    /// 32-byte private key (hex encoded, lowercase, 64 chars)
-    public let privateKeyHex: String
-    /// 32-byte public key (hex encoded, lowercase, 64 chars) – x-coordinate only as in BIP-340
-    public let publicKeyHex: String
+public class Keychain {
+    public var `private`: String
+    public var `public`: String
+    private var privBytes: [UInt8] { Array(Data(hex: `private`)!) }
+    private var pubkey: secp256k1_pubkey = secp256k1_pubkey()
+    private static let ctx: OpaquePointer = {
+        let c = secp256k1_context_create(UInt32(SECP256K1_CONTEXT_SIGN|SECP256K1_CONTEXT_VERIFY))!
+        return c
+    }()
 
-    private let privateKey: S256K1.PrivateKey
-    private let publicKey: S256K1.PublicKey
-
-    // MARK: - Initializers
-
-    /// Create keychain from an existing 64-char private key hex string.
-    public init?(privateKeyHex: String) {
-        guard let privData = Data(hex: privateKeyHex), privData.count == 32,
-              let pk = try? S256K1.PrivateKey(rawRepresentation: privData) else {
-            return nil
-        }
-        self.privateKey = pk
-        self.publicKey = pk.publicKey
-        self.privateKeyHex = privateKeyHex.lowercased()
-        self.publicKeyHex = publicKey.xonly.hexString
+    public init(_ priv: String) {
+        precondition(priv.count == 64)
+        let privLower = priv.lowercased()
+        let privBytes = Array(Data(hex: privLower)!)
+        self.private = privLower
+        var pub = secp256k1_pubkey()
+        let ok = secp256k1_ec_pubkey_create(Keychain.ctx, &pub, privBytes)
+        precondition(ok == 1, "Invalid private key")
+        self.pubkey = pub
+        self.public = Keychain.getPublicKey(privLower)
     }
 
-    /// Generate a fresh random keypair.
-    public init() throws {
-        let pk = S256K1.PrivateKey()
-        self.privateKey = pk
-        self.publicKey = pk.publicKey
-        self.privateKeyHex = pk.rawRepresentation.hexString
-        self.publicKeyHex = publicKey.xonly.hexString
+    public static func generate() -> Keychain {
+        let priv = CryptoUtils.generate64RandomHexChars()
+        return Keychain(priv)
     }
 
-    // MARK: - Sign / Verify
 
-    /// Schnorr sign message and return 128-char hex signature (64 bytes).
-    public func sign(message: Data) throws -> String {
-        // 32-byte aux random as per BIP-340
-        let auxHex = CryptoUtils.generate64RandomHexChars()
-        guard let auxData = Data(hex: auxHex) else { throw KeychainError.invalidHex }
-        let sig = try privateKey.schnorr.sign(message, auxRand: auxData)
-        return sig.rawRepresentation.hexString
+    public static func getPublicKey(_ priv: String) -> String {
+        var pub = secp256k1_pubkey()
+        let privBytes = Array(Data(hex: priv)!)
+        let ok = secp256k1_ec_pubkey_create(Keychain.ctx, &pub, privBytes)
+        precondition(ok == 1, "Invalid private key")
+        // BIP340 x-only
+        var xonlyPubkey = secp256k1_xonly_pubkey()
+        var pk_parity: Int32 = 0
+        let ok2 = secp256k1_xonly_pubkey_from_pubkey(Keychain.ctx, &xonlyPubkey, &pk_parity, &pub)
+        precondition(ok2 == 1, "Failed to get xonly pubkey")
+        var xonly = [UInt8](repeating: 0, count: 32)
+        secp256k1_xonly_pubkey_serialize(Keychain.ctx, &xonly, &xonlyPubkey)
+        return Data(xonly).hexString
     }
 
-    /// Verify Schnorr signature.
-    /// - Returns: true if valid.
-    public static func verify(publicKeyHex: String, message: Data, signatureHex: String) -> Bool {
-        guard let pubData = Data(hex: publicKeyHex), pubData.count == 32,
-              let sigData = Data(hex: signatureHex), sigData.count == 64,
-              let pub = try? S256K1.PublicKey(xonly: pubData),
-              let sig = try? S256K1.SchnorrSignature(rawRepresentation: sigData) else {
-            return false
-        }
-        return pub.schnorr.isValid(signature: sig, message: message)
-    }
-
-    // MARK: - Errors
-    public enum KeychainError: Error {
-        case invalidHex
-    }
-} 
+}

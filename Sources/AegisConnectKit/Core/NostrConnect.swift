@@ -1,5 +1,5 @@
 import Foundation
-import secp256k1
+import libsecp256k1
 
 public enum NIP46Builder {
     /// Generates keypair and secret, stores them into a connection holder then returns nostrconnect URI.
@@ -17,11 +17,9 @@ public enum NIP46Builder {
         url: String = "",
         image: String = ""
     ) -> (uri: String, pubkey: String, privkey: String, secret: String) {
-        guard let keychain = try? BIP340Keychain() else {
-            fatalError("Unable to generate keypair")
-        }
-        let pubHex = keychain.publicKeyHex
-        let privHex = keychain.privateKeyHex
+        let keychain = Keychain.generate()
+        let pubHex = keychain.public
+        let privHex = keychain.private
         let secret = CryptoUtils.generate64RandomHexChars() // 64 hex chars
 
         let uri = createNostrConnectURL(
