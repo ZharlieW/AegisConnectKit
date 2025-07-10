@@ -13,7 +13,6 @@ public final class AegisConnectKit {
 
     public func connect(
         redirect: Redirect,
-        relays: [String] = ["wss://relay.nsec.app"],
         perms: String? = nil,
         name: String? = nil,
         url: String = "",
@@ -22,7 +21,6 @@ public final class AegisConnectKit {
     ) async throws -> Credential {
         let state = redirect.stateProvider()
         let (nostrConnectURI, _, _, _) = NIP46Builder.createNostrConnectURI(
-            relays: relays,
             perms: perms,
             name: name,
             url: url,

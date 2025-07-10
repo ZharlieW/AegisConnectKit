@@ -3,7 +3,6 @@ import libsecp256k1
 
 public enum NIP46Builder {
     public static func createNostrConnectURI(
-        relays: [String] = ["wss://relay.nsec.app"],
         perms: String? = nil,
         name: String? = nil,
         url: String = "",
@@ -19,7 +18,7 @@ public enum NIP46Builder {
         let uri = createNostrConnectURL(
             clientPubKey: pubHex,
             secret: secret,
-            relays: relays,
+            relays: ["ws://127.0.0.1:8081"],
             perms: perms,
             name: name ?? scheme ?? Self.defaultAppScheme,
             url: url,

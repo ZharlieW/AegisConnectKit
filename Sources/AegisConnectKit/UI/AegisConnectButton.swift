@@ -92,7 +92,6 @@ public struct AegisConnectButton: View {
                 let credential: Credential
                 credential = try await AegisConnectKit.shared.connect(
                     redirect: redirect,
-                    relays: relays,
                     perms: perms,
                     name: name,
                     url: url,
