@@ -8,14 +8,21 @@ public struct AegisConnectButton: View {
 
     private let redirect: Redirect
     private let scheme: String
-    private let nostrconnectUrl: String?
+    private let relays: [String]
+    private let perms: String?
+    private let url: String
+    private let image: String
     private let title: String
     private let onResult: (Result<Credential, Error>) -> Void
-
+    private let name: String?
 
     public init(
         scheme: String? = nil,
-        nostrconnectUrl: String? = nil,
+        relays: [String] = ["wss://relay.nsec.app"],
+        perms: String? = nil,
+        url: String = "",
+        image: String = "",
+        name: String? = nil,
         title: String = "Connect with Aegis",
         onResult: @escaping (Result<Credential, Error>) -> Void = { _ in }
     ) {
@@ -34,9 +41,13 @@ public struct AegisConnectButton: View {
             print("[AegisConnectButton] Error: No URL scheme found. Please set scheme explicitly or configure Info.plist.")
             self.scheme = ""
             self.redirect = Redirect(source: "", successScheme: "", errorScheme: "")
-            self.nostrconnectUrl = nostrconnectUrl
+            self.relays = relays
+            self.perms = perms
+            self.url = url
+            self.image = image
             self.title = title
             self.onResult = onResult
+            self.name = name
             return
         }
         self.scheme = schemeValue
@@ -45,22 +56,14 @@ public struct AegisConnectButton: View {
             successScheme: "\(schemeValue)://x-callback-url/nip46AuthSuccess",
             errorScheme:   "\(schemeValue)://x-callback-url/nip46AuthError"
         )
-        self.nostrconnectUrl = nostrconnectUrl
+        self.relays = relays
+        self.perms = perms
+        self.url = url
+        self.image = image
         self.title     = title
         self.onResult  = onResult
+        self.name = name
     }
-
-   
-    public init(
-        relays: [String] = ["wss://relay.nsec.app"],
-        scheme: String,
-        title: String = "Connect with Aegis",
-        onResult: @escaping (Result<Credential, Error>) -> Void = { _ in }
-    ) {
-        let (uri, _, _, _) = NIP46Builder.createNostrConnectURI(relays: relays)
-        self.init(scheme: scheme, nostrconnectUrl: uri, title: title, onResult: onResult)
-    }
-
 
     public var body: some View {
         Button(action: connect) {
@@ -75,10 +78,8 @@ public struct AegisConnectButton: View {
         }
     }
 
-
-
     private func connect() {
-        guard let rootVC = UIApplication.shared
+        guard let _ = UIApplication.shared
             .connectedScenes
             .compactMap({ $0 as? UIWindowScene })
             .flatMap({ $0.windows })
@@ -91,7 +92,11 @@ public struct AegisConnectButton: View {
                 let credential: Credential
                 credential = try await AegisConnectKit.shared.connect(
                     redirect: redirect,
-                    name: nostrconnectUrl, 
+                    relays: relays,
+                    perms: perms,
+                    name: name,
+                    url: url,
+                    image: image,
                     scheme: scheme
                 )
                 onResult(.success(credential))
