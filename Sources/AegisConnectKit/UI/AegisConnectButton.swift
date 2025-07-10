@@ -1,55 +1,56 @@
+
 #if canImport(SwiftUI) && os(iOS)
 import SwiftUI
 import UIKit
 
+
 public struct AegisConnectButton: View {
-    private let scope: [String]
+
     private let redirect: Redirect
     private let scheme: String
-    private let qrCodeURL: String?
+    private let nostrconnectUrl: String?
     private let title: String
     private let onResult: (Result<Credential, Error>) -> Void
 
-    /// Creates an Aegis connect button.
-    /// - Parameters:
-    ///   - scope: Permission scopes.
-    ///   - scheme: Custom URL scheme declared in Info.plist (without `://`).
-    ///   - title: Button title, default is "Connect with Aegis".
-    ///   - onResult: Callback invoked when the connect flow finishes.
+
     public init(
-        scope: [String] = ["read"],
-        scheme: String,
-        qrCodeURL: String? = nil,
+        scheme: String? = nil,
+        nostrconnectUrl: String? = nil,
         title: String = "Connect with Aegis",
         onResult: @escaping (Result<Credential, Error>) -> Void = { _ in }
     ) {
-        self.scope = scope
-        self.scheme = scheme
-        self.redirect = Redirect(
-            source: scheme,
-            successScheme: "\(scheme)://x-callback-url/nip46AuthSuccess",
-            errorScheme: "\(scheme)://x-callback-url/nip46AuthError"
-        )
-        self.qrCodeURL = qrCodeURL
-        self.title = title
-        self.onResult = onResult
-    }
-
-    /// Convenience initializer keeping compatibility with previous version.
-    /// It tries to infer scheme via first URL type in Info.plist.
-    public init(scope: [String] = ["read"]) {
-        let scheme: String = {
-            if let urlTypes = Bundle.main.infoDictionary?["CFBundleURLTypes"] as? [[String: Any]],
-               let schemes = urlTypes.first?["CFBundleURLSchemes"] as? [String],
-               let first = schemes.first {
-                return first
+        let resolvedScheme: String? = scheme ?? {
+            if let urlTypes = Bundle.main.infoDictionary?["CFBundleURLTypes"] as? [[String: Any]] {
+                for item in urlTypes {
+                    if let schemes = item["CFBundleURLSchemes"] as? [String],
+                       let first = schemes.first(where: { !$0.isEmpty }) {
+                        return first
+                    }
+                }
             }
-            return "myapp"
+            return nil
         }()
-        self.init(scope: scope, scheme: scheme)
+        guard let schemeValue = resolvedScheme else {
+            print("[AegisConnectButton] Error: No URL scheme found. Please set scheme explicitly or configure Info.plist.")
+            self.scheme = ""
+            self.redirect = Redirect(source: "", successScheme: "", errorScheme: "")
+            self.nostrconnectUrl = nostrconnectUrl
+            self.title = title
+            self.onResult = onResult
+            return
+        }
+        self.scheme = schemeValue
+        self.redirect = Redirect(
+            source: schemeValue,
+            successScheme: "\(schemeValue)://x-callback-url/nip46AuthSuccess",
+            errorScheme:   "\(schemeValue)://x-callback-url/nip46AuthError"
+        )
+        self.nostrconnectUrl = nostrconnectUrl
+        self.title     = title
+        self.onResult  = onResult
     }
 
-    /// Convenience initializer that auto-generates keypair & secret.
+   
     public init(
         relays: [String] = ["wss://relay.nsec.app"],
         scheme: String,
@@ -57,8 +58,9 @@ public struct AegisConnectButton: View {
         onResult: @escaping (Result<Credential, Error>) -> Void = { _ in }
     ) {
         let (uri, _, _, _) = NIP46Builder.createNostrConnectURI(relays: relays)
-        self.init(scope: ["read"], scheme: scheme, qrCodeURL: uri, title: title, onResult: onResult)
+        self.init(scheme: scheme, nostrconnectUrl: uri, title: title, onResult: onResult)
     }
+
 
     public var body: some View {
         Button(action: connect) {
@@ -73,6 +75,8 @@ public struct AegisConnectButton: View {
         }
     }
 
+
+
     private func connect() {
         guard let rootVC = UIApplication.shared
             .connectedScenes
@@ -85,21 +89,11 @@ public struct AegisConnectButton: View {
         Task {
             do {
                 let credential: Credential
-                if let qr = qrCodeURL {
-                    let nostrURI = "\(qr)&scheme=\(scheme)"
-                    credential = try await AegisConnectKit.shared.connect(
-                        nostrConnectURI: nostrURI,
-                        redirect: redirect,
-                        scope: scope,
-                        from: rootVC
-                    )
-                } else {
-                    credential = try await AegisConnectKit.shared.connect(
-                        redirect: redirect,
-                        scope: scope,
-                        from: rootVC
-                    )
-                }
+                credential = try await AegisConnectKit.shared.connect(
+                    redirect: redirect,
+                    name: nostrconnectUrl, 
+                    scheme: scheme
+                )
                 onResult(.success(credential))
             } catch {
                 onResult(.failure(error))
@@ -109,6 +103,7 @@ public struct AegisConnectButton: View {
 }
 #endif
 
+
 #if DEBUG && canImport(SwiftUI)
 struct AegisConnectButton_Previews: PreviewProvider {
     static var previews: some View {
@@ -117,7 +112,7 @@ struct AegisConnectButton_Previews: PreviewProvider {
                 .previewLayout(.sizeThatFits)
                 .padding()
                 .previewDisplayName("Default")
-            AegisConnectButton(scope: ["read", "write"])
+            AegisConnectButton()
                 .preferredColorScheme(.dark)
                 .previewLayout(.sizeThatFits)
                 .padding()
@@ -125,4 +120,4 @@ struct AegisConnectButton_Previews: PreviewProvider {
         }
     }
 }
-#endif 
+#endif

@@ -2,7 +2,6 @@
 import Foundation
 
 extension URL {
-    /// Builds the aegis://x-callback-url/nip46Auth URL with required query items.
     static func aegisCallbackURL(
         nostrConnectURI: String,
         redirect: Redirect
