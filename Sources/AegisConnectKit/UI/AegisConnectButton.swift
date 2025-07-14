@@ -15,8 +15,12 @@ public struct AegisConnectButton: View {
     private let title: String
     private let onResult: (Result<Credential, Error>) -> Void
     private let name: String?
+    private let clientPubKey: String
+    private let secret: String
 
     public init(
+        clientPubKey: String,
+        secret: String,
         scheme: String? = nil,
         relays: [String] = ["wss://relay.nsec.app"],
         perms: String? = nil,
@@ -26,6 +30,9 @@ public struct AegisConnectButton: View {
         title: String = "Connect with Aegis",
         onResult: @escaping (Result<Credential, Error>) -> Void = { _ in }
     ) {
+        self.clientPubKey = clientPubKey
+        self.secret = secret
+        
         let resolvedScheme: String? = scheme ?? {
             if let urlTypes = Bundle.main.infoDictionary?["CFBundleURLTypes"] as? [[String: Any]] {
                 for item in urlTypes {
@@ -38,7 +45,6 @@ public struct AegisConnectButton: View {
             return nil
         }()
         guard let schemeValue = resolvedScheme else {
-            print("[AegisConnectButton] Error: No URL scheme found. Please set scheme explicitly or configure Info.plist.")
             self.scheme = ""
             self.redirect = Redirect(source: "", successScheme: "", errorScheme: "")
             self.relays = relays
@@ -91,6 +97,8 @@ public struct AegisConnectButton: View {
             do {
                 let credential: Credential
                 credential = try await AegisConnectKit.shared.connect(
+                    clientPubKey: clientPubKey,
+                    secret: secret,
                     redirect: redirect,
                     perms: perms,
                     name: name,
@@ -112,11 +120,17 @@ public struct AegisConnectButton: View {
 struct AegisConnectButton_Previews: PreviewProvider {
     static var previews: some View {
         Group {
-            AegisConnectButton()
+            AegisConnectButton(
+                clientPubKey: "preview_client_pubkey",
+                secret: "preview_secret"
+            )
                 .previewLayout(.sizeThatFits)
                 .padding()
                 .previewDisplayName("Default")
-            AegisConnectButton()
+            AegisConnectButton(
+                clientPubKey: "preview_client_pubkey",
+                secret: "preview_secret"
+            )
                 .preferredColorScheme(.dark)
                 .previewLayout(.sizeThatFits)
                 .padding()

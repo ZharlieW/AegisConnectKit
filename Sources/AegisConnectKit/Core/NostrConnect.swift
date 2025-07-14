@@ -3,20 +3,16 @@ import libsecp256k1
 
 public enum NIP46Builder {
     public static func createNostrConnectURI(
+        clientPubKey: String,
+        secret: String,
         perms: String? = nil,
         name: String? = nil,
         url: String = "",
         image: String = "",
         scheme: String? = nil
-    ) -> (uri: String, pubkey: String, privkey: String, secret: String) {
-        let keychain = Keychain.generate()
-        let pubHex = keychain.public
-        let privHex = keychain.private
-        let secret = CryptoUtils.generate64RandomHexChars() // 64 hex chars
-
-
+    ) -> String {
         let uri = createNostrConnectURL(
-            clientPubKey: pubHex,
+            clientPubKey: clientPubKey,
             secret: secret,
             relays: ["ws://127.0.0.1:8081"],
             perms: perms,
@@ -26,7 +22,7 @@ public enum NIP46Builder {
             scheme: scheme ?? Self.defaultAppScheme
         )
         
-        return (uri, pubHex, privHex, secret)
+        return uri
     }
 
     public static func createNostrConnectURL(

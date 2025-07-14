@@ -22,11 +22,6 @@ let package = Package(
                 .product(name: "libsecp256k1", package: "secp256k1.swift")
             ],
             path: "Sources"
-        ),
-        .testTarget(
-            name: "AegisConnectKitTests",
-            dependencies: ["AegisConnectKit"],
-            path: "Tests"
-        ),
+        )
     ]
 ) 

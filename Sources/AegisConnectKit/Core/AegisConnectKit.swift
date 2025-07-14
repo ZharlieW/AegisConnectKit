@@ -12,6 +12,8 @@ public final class AegisConnectKit {
     }
 
     public func connect(
+        clientPubKey: String,
+        secret: String,
         redirect: Redirect,
         perms: String? = nil,
         name: String? = nil,
@@ -20,7 +22,9 @@ public final class AegisConnectKit {
         scheme: String? = nil
     ) async throws -> Credential {
         let state = redirect.stateProvider()
-        let (nostrConnectURI, _, _, _) = NIP46Builder.createNostrConnectURI(
+        let nostrConnectURI = NIP46Builder.createNostrConnectURI(
+            clientPubKey: clientPubKey,
+            secret: secret,
             perms: perms,
             name: name,
             url: url,
@@ -33,7 +37,17 @@ public final class AegisConnectKit {
         ) else {
             throw AegisError.invalidParameter
         }
+        
+        // Log the URL being sent to Aegis
         Logger.debug("Opening Aegis: \(aegisURL.absoluteString)")
+        
+        // Parse and log the x-success parameter being sent
+        if let components = URLComponents(url: aegisURL, resolvingAgainstBaseURL: false),
+           let xSuccessItem = components.queryItems?.first(where: { $0.name == "x-success" }) {
+            // Store this information for later use in callback
+            CallbackStore.shared.storeSentXSuccess(xSuccessItem.value)
+        }
+        
         let didOpen = await openURL(aegisURL)
         if !didOpen {
             throw AegisError.unableToOpenAegis
@@ -50,10 +64,14 @@ public final class AegisConnectKit {
     @discardableResult
     public func handleOpenURL(_ url: URL) -> Bool {
         Logger.debug("Received URL: \(url.absoluteString)")
-        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
-              let callback = CallbackStore.shared.callback(for: components) else {
+        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
             return false
         }
+        
+        guard let callback = CallbackStore.shared.callback(for: components) else {
+            return false
+        }
+        
         callback()
         return true
     }
