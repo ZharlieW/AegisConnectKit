@@ -21,7 +21,10 @@ let package = Package(
             dependencies: [
                 .product(name: "libsecp256k1", package: "secp256k1.swift")
             ],
-            path: "Sources"
+            path: "Sources",
+            resources: [
+                .process("Resources")
+            ]
         )
     ]
 ) 

@@ -17,6 +17,7 @@ public struct AegisConnectButton: View {
     private let name: String?
     private let clientPubKey: String
     private let secret: String
+    private let useCustomLogo: Bool
 
     public init(
         clientPubKey: String,
@@ -28,10 +29,12 @@ public struct AegisConnectButton: View {
         image: String = "",
         name: String? = nil,
         title: String = "Connect with Aegis",
+        useCustomLogo: Bool = false,
         onResult: @escaping (Result<Credential, Error>) -> Void = { _ in }
     ) {
         self.clientPubKey = clientPubKey
         self.secret = secret
+        self.useCustomLogo = useCustomLogo
         
         let resolvedScheme: String? = scheme ?? {
             if let urlTypes = Bundle.main.infoDictionary?["CFBundleURLTypes"] as? [[String: Any]] {
@@ -74,7 +77,16 @@ public struct AegisConnectButton: View {
     public var body: some View {
         Button(action: connect) {
             HStack {
-                Image(systemName: "shield.fill")
+                if useCustomLogo {
+                    Image("aegis_logo")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 20, height: 20)
+                } else {
+                    Image(systemName: "shield.fill")
+                        .foregroundColor(.white)
+                        .frame(width: 20, height: 20)
+                }
                 Text(title)
             }
             .padding()
@@ -126,15 +138,16 @@ struct AegisConnectButton_Previews: PreviewProvider {
             )
                 .previewLayout(.sizeThatFits)
                 .padding()
-                .previewDisplayName("Default")
+                .previewDisplayName("System Icon")
             AegisConnectButton(
                 clientPubKey: "preview_client_pubkey",
-                secret: "preview_secret"
+                secret: "preview_secret",
+                useCustomLogo: true
             )
                 .preferredColorScheme(.dark)
                 .previewLayout(.sizeThatFits)
                 .padding()
-                .previewDisplayName("Dark Mode")
+                .previewDisplayName("Custom Logo")
         }
     }
 }
