@@ -8,7 +8,6 @@ public struct AegisConnectButton: View {
 
     private let redirect: Redirect
     private let scheme: String
-    private let relays: [String]
     private let perms: String?
     private let url: String
     private let image: String
@@ -23,7 +22,6 @@ public struct AegisConnectButton: View {
         clientPubKey: String,
         secret: String,
         scheme: String? = nil,
-        relays: [String] = ["wss://relay.nsec.app"],
         perms: String? = nil,
         url: String = "",
         image: String = "",
@@ -50,7 +48,6 @@ public struct AegisConnectButton: View {
         guard let schemeValue = resolvedScheme else {
             self.scheme = ""
             self.redirect = Redirect(source: "", successScheme: "", errorScheme: "")
-            self.relays = relays
             self.perms = perms
             self.url = url
             self.image = image
@@ -65,7 +62,6 @@ public struct AegisConnectButton: View {
             successScheme: "\(schemeValue)://x-callback-url/nip46AuthSuccess",
             errorScheme:   "\(schemeValue)://x-callback-url/nip46AuthError"
         )
-        self.relays = relays
         self.perms = perms
         self.url = url
         self.image = image
@@ -76,24 +72,40 @@ public struct AegisConnectButton: View {
 
     public var body: some View {
         Button(action: connect) {
-            HStack {
+            HStack(spacing: 8) {
                 if useCustomLogo {
                     Image("aegis_logo")
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .frame(width: 20, height: 20)
+                        .frame(width: 28, height: 28)
                 } else {
                     Image(systemName: "shield.fill")
-                        .foregroundColor(.white)
-                        .frame(width: 20, height: 20)
+                        .foregroundColor(.blue)
+                        .frame(width: 28, height: 28)
+                        .background(
+                            Circle()
+                                .fill(Color.blue.opacity(0.1))
+                                .frame(width: 36, height: 36)
+                        )
                 }
+                
                 Text(title)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.primary)
             }
-            .padding()
-            .foregroundColor(.white)
-            .background(Color.accentColor)
-            .cornerRadius(8)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(Color.white)
+            .cornerRadius(12)
+            .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+            )
         }
+        .buttonStyle(PlainButtonStyle())
+        .scaleEffect(1.0)
+        .animation(.easeInOut(duration: 0.1), value: true)
     }
 
     private func connect() {
@@ -131,24 +143,23 @@ public struct AegisConnectButton: View {
 #if DEBUG && canImport(SwiftUI)
 struct AegisConnectButton_Previews: PreviewProvider {
     static var previews: some View {
-        Group {
+        VStack(spacing: 20) {
             AegisConnectButton(
                 clientPubKey: "preview_client_pubkey",
                 secret: "preview_secret"
             )
-                .previewLayout(.sizeThatFits)
-                .padding()
-                .previewDisplayName("System Icon")
+            .previewDisplayName("Default")
+            
             AegisConnectButton(
                 clientPubKey: "preview_client_pubkey",
                 secret: "preview_secret",
                 useCustomLogo: true
             )
-                .preferredColorScheme(.dark)
-                .previewLayout(.sizeThatFits)
-                .padding()
-                .previewDisplayName("Custom Logo")
+            .previewDisplayName("With Logo")
         }
+        .padding()
+        .background(Color.gray.opacity(0.1))
+        .previewLayout(.sizeThatFits)
     }
 }
 #endif
