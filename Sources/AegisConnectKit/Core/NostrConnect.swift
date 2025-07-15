@@ -5,7 +5,6 @@ public enum NIP46Builder {
     public static func createNostrConnectURI(
         clientPubKey: String,
         secret: String,
-        perms: String? = nil,
         name: String? = nil,
         url: String = "",
         image: String = "",
@@ -15,7 +14,6 @@ public enum NIP46Builder {
             clientPubKey: clientPubKey,
             secret: secret,
             relays: ["ws://127.0.0.1:8081"],
-            perms: perms,
             name: name ?? scheme ?? Self.defaultAppScheme,
             url: url,
             image: image,
@@ -29,7 +27,6 @@ public enum NIP46Builder {
         clientPubKey: String,
         secret: String,
         relays: [String],
-        perms: String? = nil,
         name: String? = nil,
         url: String? = nil,
         image: String? = nil,
@@ -44,7 +41,6 @@ public enum NIP46Builder {
             URLQueryItem(name: "secret", value: secret),
             URLQueryItem(name: "scheme", value: scheme ?? Self.defaultAppScheme)
         ]
-        if let perms = perms, !perms.isEmpty { query.append(.init(name: "perms", value: perms)) }
         if let name = name { query.append(.init(name: "name", value: name)) }
         if let url = url { query.append(.init(name: "url", value: url)) }
         if let image = image { query.append(.init(name: "image", value: image)) }

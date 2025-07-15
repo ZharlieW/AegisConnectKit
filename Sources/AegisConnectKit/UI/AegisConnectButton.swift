@@ -8,7 +8,6 @@ public struct AegisConnectButton: View {
 
     private let redirect: Redirect
     private let scheme: String
-    private let perms: String?
     private let url: String
     private let image: String
     private let title: String
@@ -22,7 +21,6 @@ public struct AegisConnectButton: View {
         clientPubKey: String,
         secret: String,
         scheme: String? = nil,
-        perms: String? = nil,
         url: String = "",
         image: String = "",
         name: String? = nil,
@@ -34,21 +32,24 @@ public struct AegisConnectButton: View {
         self.secret = secret
         self.useCustomLogo = useCustomLogo
         
+        // Auto-detect scheme if not provided
         let resolvedScheme: String? = scheme ?? {
-            if let urlTypes = Bundle.main.infoDictionary?["CFBundleURLTypes"] as? [[String: Any]] {
-                for item in urlTypes {
-                    if let schemes = item["CFBundleURLSchemes"] as? [String],
-                       let first = schemes.first(where: { !$0.isEmpty }) {
-                        return first
-                    }
+            guard let urlTypes = Bundle.main.infoDictionary?["CFBundleURLTypes"] as? [[String: Any]] else {
+                return nil
+            }
+            
+            for item in urlTypes {
+                if let schemes = item["CFBundleURLSchemes"] as? [String],
+                   let first = schemes.first(where: { !$0.isEmpty }) {
+                    return first
                 }
             }
             return nil
         }()
+        
         guard let schemeValue = resolvedScheme else {
             self.scheme = ""
             self.redirect = Redirect(source: "", successScheme: "", errorScheme: "")
-            self.perms = perms
             self.url = url
             self.image = image
             self.title = title
@@ -56,17 +57,17 @@ public struct AegisConnectButton: View {
             self.name = name
             return
         }
+        
         self.scheme = schemeValue
         self.redirect = Redirect(
             source: schemeValue,
             successScheme: "\(schemeValue)://x-callback-url/nip46AuthSuccess",
-            errorScheme:   "\(schemeValue)://x-callback-url/nip46AuthError"
+            errorScheme: "\(schemeValue)://x-callback-url/nip46AuthError"
         )
-        self.perms = perms
         self.url = url
         self.image = image
-        self.title     = title
-        self.onResult  = onResult
+        self.title = title
+        self.onResult = onResult
         self.name = name
     }
 
@@ -124,7 +125,6 @@ public struct AegisConnectButton: View {
                     clientPubKey: clientPubKey,
                     secret: secret,
                     redirect: redirect,
-                    perms: perms,
                     name: name,
                     url: url,
                     image: image,
