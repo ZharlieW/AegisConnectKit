@@ -11,15 +11,37 @@ public final class AegisConnectKit {
         await UIApplication.shared.open(url)
     }
 
-    public func connect(
+    public func authenticate(
         clientPubKey: String,
         secret: String,
-        redirect: Redirect,
         name: String? = nil,
         url: String = "",
         image: String = "",
         scheme: String? = nil
     ) async throws -> Credential {
+        // Auto-detect scheme from Info.plist if not provided
+        let resolvedScheme: String? = scheme ?? {
+            if let urlTypes = Bundle.main.infoDictionary?["CFBundleURLTypes"] as? [[String: Any]] {
+                for item in urlTypes {
+                    if let schemes = item["CFBundleURLSchemes"] as? [String],
+                       let first = schemes.first(where: { !$0.isEmpty }) {
+                        return first
+                    }
+                }
+            }
+            return nil
+        }()
+        
+        guard let schemeValue = resolvedScheme else {
+            throw AegisError.invalidParameter
+        }
+        
+        let redirect = Redirect(
+            source: schemeValue,
+            successScheme: "\(schemeValue)://x-callback-url/nip46AuthSuccess",
+            errorScheme: "\(schemeValue)://x-callback-url/nip46AuthError"
+        )
+        
         let state = redirect.stateProvider()
         let nostrConnectURI = NIP46Builder.createNostrConnectURI(
             clientPubKey: clientPubKey,
@@ -27,7 +49,7 @@ public final class AegisConnectKit {
             name: name,
             url: url,
             image: image,
-            scheme: scheme
+            scheme: schemeValue
         )
         guard let aegisURL = URL.aegisCallbackURL(
             nostrConnectURI: nostrConnectURI,
@@ -69,5 +91,7 @@ public final class AegisConnectKit {
         callback()
         return true
     }
+    
+
 }
 #endif 

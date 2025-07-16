@@ -101,10 +101,9 @@ public struct AegisConnectButton: View {
         Task {
             do {
                 let credential: Credential
-                credential = try await AegisConnectKit.shared.connect(
+                credential = try await AegisConnectKit.shared.authenticate(
                     clientPubKey: clientPubKey,
                     secret: secret,
-                    redirect: redirect,
                     name: name,
                     url: url,
                     image: image,
