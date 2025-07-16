@@ -141,7 +141,7 @@ AegisConnectButton(
 
 ```swift
 AegisConnectButton(
-    clientPubKey: "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef12",
+    clientPubKey: "your_key",
     secret: "your_secret"
 ) { result in
     handleAuthenticationResult(result)
@@ -165,7 +165,7 @@ func handleAuthenticationResult(_ result: Result<Credential, Error>) {
 
 ```swift
 AegisConnectButton(
-    clientPubKey: "your_key",
+    clientPubKey: "your_client_public_key",
     secret: "your_secret",
     title: "Use Aegis Logo",
     useAegisLogo: true,
@@ -182,7 +182,7 @@ Button("Direct Login") {
     Task {
         do {
             let credential = try await AegisConnectKit.shared.authenticate(
-                clientPubKey: "your_key",
+                clientPubKey: "your_client_public_key",
                 secret: "your_secret",
                 name: "Demo App"
             )
