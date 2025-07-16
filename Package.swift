@@ -13,13 +13,11 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/GigaBitcoin/secp256k1.swift", from: "0.11.1")
     ],
     targets: [
         .target(
             name: "AegisConnectKit",
             dependencies: [
-                .product(name: "libsecp256k1", package: "secp256k1.swift")
             ],
             path: "Sources",
             resources: [

@@ -17,60 +17,20 @@ public struct Credential: Codable {
 /// Error cases that may occur during the connect flow.
 public enum AegisError: Error, LocalizedError {
     case userCancelled
-    case invalidParameter(String)
+    case invalidParameter
     case unableToOpenAegis
     case verificationFailed
-    case callbackTimeout
-    case invalidCallback
     
     public var errorDescription: String? {
         switch self {
         case .userCancelled:
             return "User cancelled the authentication"
-        case .invalidParameter(let message):
-            return "Invalid parameter: \(message)"
+        case .invalidParameter:
+            return "Invalid parameter"
         case .unableToOpenAegis:
             return "Unable to open Aegis app. Please make sure Aegis is installed"
         case .verificationFailed:
             return "Authentication verification failed"
-        case .callbackTimeout:
-            return "Authentication callback timeout"
-        case .invalidCallback:
-            return "Invalid callback URL received"
-        }
-    }
-    
-    public var failureReason: String? {
-        switch self {
-        case .userCancelled:
-            return "The user chose to cancel the authentication process"
-        case .invalidParameter(let message):
-            return message
-        case .unableToOpenAegis:
-            return "Aegis app is not installed or cannot be opened"
-        case .verificationFailed:
-            return "The authentication response could not be verified"
-        case .callbackTimeout:
-            return "No response received from Aegis within the expected time"
-        case .invalidCallback:
-            return "The callback URL format is invalid or missing required parameters"
-        }
-    }
-    
-    public var recoverySuggestion: String? {
-        switch self {
-        case .userCancelled:
-            return "Try authenticating again"
-        case .invalidParameter(let message):
-            return "Please check your parameters and try again"
-        case .unableToOpenAegis:
-            return "Please install Aegis from the App Store and try again"
-        case .verificationFailed:
-            return "Please try authenticating again"
-        case .callbackTimeout:
-            return "Please try authenticating again. Make sure Aegis is running"
-        case .invalidCallback:
-            return "Please check your URL scheme configuration and try again"
         }
     }
 }
@@ -104,25 +64,11 @@ final class CallbackStore {
 
     private var continuations: [String: (Result<Credential, Error>) -> Void] = [:]
     private let lock = NSLock()
-    private var sentXSuccessParameter: String?
 
     func register(state: String, _ continuation: @escaping (Result<Credential, Error>) -> Void) {
         lock.lock()
         continuations[state] = continuation
         lock.unlock()
-    }
-    
-    func storeSentXSuccess(_ xSuccess: String?) {
-        lock.lock()
-        sentXSuccessParameter = xSuccess
-        lock.unlock()
-    }
-    
-    func getSentXSuccess() -> String? {
-        lock.lock()
-        let result = sentXSuccessParameter
-        lock.unlock()
-        return result
     }
 
     func callback(for components: URLComponents) -> (() -> Void)? {
@@ -170,13 +116,12 @@ final class CallbackStore {
     }
     
     private func parseCredentialFromQueryItems(_ queryItems: [URLQueryItem], fullURL: String) -> Credential {
-        let sentXSuccess = getSentXSuccess()
         let queryParams = queryItems.reduce(into: [String: String]()) { result, item in
             result[item.name] = item.value
         }
         
         return Credential(
-            callbackURL: sentXSuccess ?? "unknown",
+            callbackURL: "success",
             fullCallbackURL: fullURL,
             queryParameters: queryParams
         )

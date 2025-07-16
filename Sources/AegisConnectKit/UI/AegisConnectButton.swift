@@ -5,7 +5,8 @@ import UIKit
 
 
 public struct AegisConnectButton: View {
-
+    private let clientPubKey: String
+    private let secret: String
     private let redirect: Redirect
     private let scheme: String
     private let url: String
@@ -13,9 +14,8 @@ public struct AegisConnectButton: View {
     private let title: String
     private let onResult: (Result<Credential, Error>) -> Void
     private let name: String?
-    private let clientPubKey: String
-    private let secret: String
-    private let useCustomLogo: Bool
+    private let useAegisLogo: Bool
+    private let backgroundColor: Color
 
     public init(
         clientPubKey: String,
@@ -25,29 +25,27 @@ public struct AegisConnectButton: View {
         image: String = "",
         name: String? = nil,
         title: String = "Connect with Aegis",
-        useCustomLogo: Bool = false,
+        useAegisLogo: Bool = false,
+        backgroundColor: Color = .white,
         onResult: @escaping (Result<Credential, Error>) -> Void = { _ in }
     ) {
         self.clientPubKey = clientPubKey
         self.secret = secret
-        self.useCustomLogo = useCustomLogo
-        
-        // Auto-detect scheme if not provided
+        self.useAegisLogo = useAegisLogo
+        self.backgroundColor = backgroundColor
         let resolvedScheme: String? = scheme ?? {
-            guard let urlTypes = Bundle.main.infoDictionary?["CFBundleURLTypes"] as? [[String: Any]] else {
-                return nil
-            }
-            
-            for item in urlTypes {
-                if let schemes = item["CFBundleURLSchemes"] as? [String],
-                   let first = schemes.first(where: { !$0.isEmpty }) {
-                    return first
+            if let urlTypes = Bundle.main.infoDictionary?["CFBundleURLTypes"] as? [[String: Any]] {
+                for item in urlTypes {
+                    if let schemes = item["CFBundleURLSchemes"] as? [String],
+                       let first = schemes.first(where: { !$0.isEmpty }) {
+                        return first
+                    }
                 }
             }
             return nil
         }()
-        
         guard let schemeValue = resolvedScheme else {
+            print("[AegisConnectButton] Error: No URL scheme found. Please set scheme explicitly or configure Info.plist.")
             self.scheme = ""
             self.redirect = Redirect(source: "", successScheme: "", errorScheme: "")
             self.url = url
@@ -57,56 +55,38 @@ public struct AegisConnectButton: View {
             self.name = name
             return
         }
-        
         self.scheme = schemeValue
         self.redirect = Redirect(
             source: schemeValue,
             successScheme: "\(schemeValue)://x-callback-url/nip46AuthSuccess",
-            errorScheme: "\(schemeValue)://x-callback-url/nip46AuthError"
+            errorScheme:   "\(schemeValue)://x-callback-url/nip46AuthError"
         )
         self.url = url
         self.image = image
-        self.title = title
-        self.onResult = onResult
+        self.title     = title
+        self.onResult  = onResult
         self.name = name
     }
 
     public var body: some View {
         Button(action: connect) {
-            HStack(spacing: 8) {
-                if useCustomLogo {
-                    Image("aegis_logo")
+            HStack {
+                if useAegisLogo {
+                    Image("aegis_logo", bundle: .module)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .frame(width: 28, height: 28)
+                        .frame(width: 20, height: 20)
                 } else {
                     Image(systemName: "shield.fill")
-                        .foregroundColor(.blue)
-                        .frame(width: 28, height: 28)
-                        .background(
-                            Circle()
-                                .fill(Color.blue.opacity(0.1))
-                                .frame(width: 36, height: 36)
-                        )
                 }
-                
                 Text(title)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.primary)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(Color.white)
-            .cornerRadius(12)
-            .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.gray.opacity(0.2), lineWidth: 1)
-            )
+            .padding()
+            .foregroundColor(backgroundColor == .white ? .black : .white)
+            .background(backgroundColor)
+            .cornerRadius(8)
+            .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
         }
-        .buttonStyle(PlainButtonStyle())
-        .scaleEffect(1.0)
-        .animation(.easeInOut(duration: 0.1), value: true)
     }
 
     private func connect() {
@@ -140,26 +120,4 @@ public struct AegisConnectButton: View {
 #endif
 
 
-#if DEBUG && canImport(SwiftUI)
-struct AegisConnectButton_Previews: PreviewProvider {
-    static var previews: some View {
-        VStack(spacing: 20) {
-            AegisConnectButton(
-                clientPubKey: "preview_client_pubkey",
-                secret: "preview_secret"
-            )
-            .previewDisplayName("Default")
-            
-            AegisConnectButton(
-                clientPubKey: "preview_client_pubkey",
-                secret: "preview_secret",
-                useCustomLogo: true
-            )
-            .previewDisplayName("With Logo")
-        }
-        .padding()
-        .background(Color.gray.opacity(0.1))
-        .previewLayout(.sizeThatFits)
-    }
-}
-#endif
+

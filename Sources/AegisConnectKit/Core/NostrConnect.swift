@@ -1,5 +1,4 @@
 import Foundation
-import libsecp256k1
 
 public enum NIP46Builder {
     public static func createNostrConnectURI(
@@ -13,7 +12,6 @@ public enum NIP46Builder {
         let uri = createNostrConnectURL(
             clientPubKey: clientPubKey,
             secret: secret,
-            relays: ["ws://127.0.0.1:8081"],
             name: name ?? scheme ?? Self.defaultAppScheme,
             url: url,
             image: image,
@@ -26,7 +24,6 @@ public enum NIP46Builder {
     public static func createNostrConnectURL(
         clientPubKey: String,
         secret: String,
-        relays: [String],
         name: String? = nil,
         url: String? = nil,
         image: String? = nil,
@@ -37,7 +34,7 @@ public enum NIP46Builder {
         components.host = clientPubKey.lowercased()
 
         var query: [URLQueryItem] = [
-            URLQueryItem(name: "relay", value: relays.joined(separator: "&relay=")),
+            URLQueryItem(name: "relay", value: "ws://127.0.0.1:8081"),
             URLQueryItem(name: "secret", value: secret),
             URLQueryItem(name: "scheme", value: scheme ?? Self.defaultAppScheme)
         ]

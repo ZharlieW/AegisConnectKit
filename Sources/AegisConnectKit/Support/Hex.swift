@@ -24,16 +24,3 @@ extension Data {
         self.init(bytes)
     }
 }
-
-enum CryptoUtils {
-    /// Generates a random hex string of given byte length * 2 characters.
-    static func randomHex(byteCount: Int) -> String {
-        var bytes = [UInt8](repeating: 0, count: byteCount)
-        _ = SecRandomCopyBytes(kSecRandomDefault, byteCount, &bytes)
-        return Data(bytes).hexString
-    }
-    /// Generates a 64-char lowercase hex string (32 random bytes).
-    static func generate64RandomHexChars() -> String {
-        randomHex(byteCount: 32)
-    }
-}
