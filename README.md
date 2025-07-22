@@ -141,7 +141,7 @@ AegisConnectButton(
 
 ```swift
 AegisConnectButton(
-    clientPubKey: "your_key",
+    clientPubKey: "your_client_public_key",
     secret: "your_secret"
 ) { result in
     handleAuthenticationResult(result)

@@ -38,8 +38,8 @@ public final class AegisConnectKit {
         
         let redirect = Redirect(
             source: schemeValue,
-            successScheme: "\(schemeValue)://x-callback-url/nip46AuthSuccess",
-            errorScheme: "\(schemeValue)://x-callback-url/nip46AuthError"
+            successScheme: "\(schemeValue)://x-callback-url/authSuccess",
+            errorScheme: "\(schemeValue)://x-callback-url/authError"
         )
         
         let state = redirect.stateProvider()

@@ -58,8 +58,8 @@ public struct AegisConnectButton: View {
         self.scheme = schemeValue
         self.redirect = Redirect(
             source: schemeValue,
-            successScheme: "\(schemeValue)://x-callback-url/nip46AuthSuccess",
-            errorScheme:   "\(schemeValue)://x-callback-url/nip46AuthError"
+            successScheme: "\(schemeValue)://x-callback-url/authSuccess",
+            errorScheme:   "\(schemeValue)://x-callback-url/authError"
         )
         self.url = url
         self.image = image
