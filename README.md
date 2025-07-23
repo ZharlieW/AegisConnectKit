@@ -4,40 +4,20 @@
 [![Platform](https://img.shields.io/badge/Platform-iOS%2015.0+-blue.svg)](https://developer.apple.com/ios/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-A SwiftUI component library for integrating Aegis wallet NIP-46 authentication protocol.
+SwiftUI component library for quickly integrating Aegis signer URL scheme method.
 
-> **Note**: This library handles the initial authentication step. After successful authentication, you need to manually connect to the relay using the returned credential information to complete the full NIP-46 flow.
+## 🚀 Quick Integration
 
-## 📋 Table of Contents
-
-- [Features](#features)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [API Reference](#api-reference)
-- [License](#license)
-
-## ✨ Features
-
-- 🔐 **NIP-46 Protocol Support** - Complete Nostr Connect protocol implementation
-- 🎨 **SwiftUI Components** - Ready-to-use `AegisConnectButton` component
-- 🛠 **Flexible API** - Support for both direct calls and component usage
-- 🎯 **Auto Configuration** - Automatically reads URL Scheme from Info.plist
-- 📱 **iOS 15+** - Supports iOS 15.0 and above
-
-## 📦 Installation
-
-### Swift Package Manager
+### 1. Install Dependencies
 
 In Xcode:
-1. Select your project → **Package Dependencies** → **"+"**
+1. Project → **Package Dependencies** → **"+"**
 2. Enter: `https://github.com/ZharlieW/AegisConnectKit.git`
 3. Choose version rule → **Add Package**
 
-## 🚀 Quick Start
+### 2. Configure URL Scheme
 
-### 1. Configure URL Scheme
-
-Add the following to your `Info.plist`:
+**Key Step**: Configure custom URL scheme in `Info.plist` to redirect back from Aegis signer to your app:
 
 ```xml
 <key>CFBundleURLTypes</key>
@@ -51,7 +31,22 @@ Add the following to your `Info.plist`:
 </array>
 ```
 
-### 2. Use the Button Component
+### 3. Handle Callbacks
+
+Handle URL callbacks redirected back from Aegis signer:
+
+```swift
+func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+    guard let url = URLContexts.first?.url else { return }
+    AegisConnectKit.shared.handleOpenURL(url)
+}
+```
+
+## 📱 Integration Options
+
+### Option 1: Use Button Component (Recommended)
+
+Click the button to **automatically redirect users to Aegis signer** for authentication:
 
 ```swift
 import SwiftUI
@@ -75,9 +70,9 @@ AegisConnectButton(
 }
 ```
 
-### 3. Handle Callbacks
+### Option 2: Direct Method Call
 
-Add the following to your `SceneDelegate.swift`:
+**Manually trigger redirection to Aegis signer**:
 
 ```swift
 func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
@@ -178,22 +173,22 @@ AegisConnectButton(
 ### Direct Method Call
 
 ```swift
-Button("Direct Login") {
+Button("Connect Aegis") {
     Task {
         do {
             let credential = try await AegisConnectKit.shared.authenticate(
                 clientPubKey: "your_client_public_key",
                 secret: "your_secret",
-                name: "Demo App"
+                name: "Your App Name"
             )
+            print("✅ Login successful: \(credential)")
             // Get relay and connect
             if let relay = credential.queryParameters["relay"] {
                 print("📡 Connecting to relay: \(relay)")
                 // Implement your relay connection logic here
             }
-            
         } catch {
-            print("❌ Authentication failed: \(error)")
+            print("❌ Login failed: \(error)")
         }
     }
 }
@@ -201,5 +196,5 @@ Button("Direct Login") {
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE) file for details.
 
